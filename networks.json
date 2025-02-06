@@ -1,0 +1,8 @@
+{
+  "base-sepolia": {
+    "OnlyRoastNFT": {
+      "address": "0x8F871191AbBB525Fbd72b40B472E052D3E50Cb2e",
+      "startBlock": 21531938
+    }
+  }
+}
