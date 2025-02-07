@@ -1,19 +1,30 @@
 type Token @entity {
   id: ID!
-  tokenId: BigInt!
-  lits: BigInt!
-  drops: BigInt!
+  owner: User!
+  tokenID: BigInt!
   tokenURI: String!
   externalURL: String!
-  owner: User!
-  image: String!
+  lits: BigInt!
+  drops: BigInt!
+  ipfsHashURI: TokenMetadata
+  updatedAtTimestamp: BigInt
+}
+
+type TokenMetadata @entity {
+  id: ID!
   name: String!
+  image: String!
   description: String!
-  updatedAtTimestamp: BigInt!
-  walletStatus: String!
-  ETHSpent: BigInt!
-  RoastIntensity: String!
-  Advice: String!
+  traitType0: String!
+  value0: String!
+  traitType1: String!
+  value1: String!
+  traitType2: String!
+  value2: String!
+  traitType3: String!
+  value3: String!
+  traitType4: String!
+  value4: String!
 }
 
 type User @entity {
@@ -29,12 +40,12 @@ type _Schema_
     algorithm: rank
     include: [
       {
-        entity: "Token"
+        entity: "TokenMetadata"
         fields: [
           { name: "name" }
           { name: "description" }
-          { name: "RoastIntensity" }
-          { name: "Advice" }
+          { name: "value0" }
+          { name: "value1" }
         ]
       }
     ]

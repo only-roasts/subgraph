@@ -3,14 +3,16 @@ indexerHints:
   prune: auto
 schema:
   file: ./schema.graphql
+features:
+  - fullTextSearch
 dataSources:
   - kind: ethereum
     name: OnlyRoastNFT
     network: base-sepolia
     source:
-      address: "0x0d23c18151c8289d2B72d577a6b9Bf44b3660A4F"
+      address: "0xa2248F195b8E805B9Ca3FD97C50BAA15686D41A2"
       abi: OnlyRoastNFT
-      startBlock: 21576205
+      startBlock: 21593481
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -38,3 +40,17 @@ dataSources:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
       file: ./src/only-roast-nft.ts
+
+templates:
+  - name: TokenMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/only-roast-nft.ts
+      handler: handleMetadata
+      entities:
+        - TokenMetadata
+      abis:
+        - name: OnlyRoastNFT
+          file: ./abis/OnlyRoastNFT.json
