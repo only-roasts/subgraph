@@ -1,31 +1,44 @@
-type Approval @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  approved: Bytes! # address
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type Token @entity {
+  id: ID!
+  tokenId: BigInt!
+  lits: BigInt!
+  drops: BigInt!
+  tokenURI: String!
+  externalURL: String!
+  owner: User!
+  image: String!
+  name: String!
+  description: String!
+  updatedAtTimestamp: BigInt!
+  walletStatus: String!
+  ETHSpent: BigInt!
+  RoastIntensity: String!
+  Advice: String!
 }
 
-type ApprovalForAll @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  operator: Bytes! # address
-  approved: Boolean! # bool
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type User @entity {
+  id: ID!
+  address: Bytes!
+  token: Token! @derivedFrom(field: "owner")
 }
 
-type BatchMetadataUpdate @entity(immutable: true) {
-  id: Bytes!
-  _fromTokenId: BigInt! # uint256
-  _toTokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
+type _Schema_
+  @fulltext(
+    name: "OnlyRoastSearch"
+    language: en
+    algorithm: rank
+    include: [
+      {
+        entity: "Token"
+        fields: [
+          { name: "name" }
+          { name: "description" }
+          { name: "RoastIntensity" }
+          { name: "Advice" }
+        ]
+      }
+    ]
+  )
 
 type DropAdded @entity(immutable: true) {
   id: Bytes!
@@ -52,15 +65,6 @@ type LitAdded @entity(immutable: true) {
 type MetadataUpdate @entity(immutable: true) {
   id: Bytes!
   _tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

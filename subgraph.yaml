@@ -8,41 +8,31 @@ dataSources:
     name: OnlyRoastNFT
     network: base-sepolia
     source:
-      address: "0x8F871191AbBB525Fbd72b40B472E052D3E50Cb2e"
+      address: "0x0d23c18151c8289d2B72d577a6b9Bf44b3660A4F"
       abi: OnlyRoastNFT
-      startBlock: 21531938
+      startBlock: 21576205
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - Approval
-        - ApprovalForAll
-        - BatchMetadataUpdate
+        - Token
+        - User
         - DropAdded
         - LitAdded
         - MetadataUpdate
-        - OwnershipTransferred
         - TokenMinted
         - Transfer
       abis:
         - name: OnlyRoastNFT
           file: ./abis/OnlyRoastNFT.json
       eventHandlers:
-        - event: Approval(indexed address,indexed address,indexed uint256)
-          handler: handleApproval
-        - event: ApprovalForAll(indexed address,indexed address,bool)
-          handler: handleApprovalForAll
-        - event: BatchMetadataUpdate(uint256,uint256)
-          handler: handleBatchMetadataUpdate
         - event: DropAdded(indexed address,indexed uint256,uint256,uint256)
           handler: handleDropAdded
         - event: LitAdded(indexed address,indexed uint256,uint256,uint256)
           handler: handleLitAdded
         - event: MetadataUpdate(uint256)
           handler: handleMetadataUpdate
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
         - event: TokenMinted(indexed address,uint256,string)
           handler: handleTokenMinted
         - event: Transfer(indexed address,indexed address,indexed uint256)
