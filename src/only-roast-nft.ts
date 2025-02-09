@@ -19,7 +19,14 @@ import {
 
 import { TokenMetadata as TokenMetadataTemplate } from "../generated/templates";
 
-import { json, Bytes, dataSource, log, BigInt } from "@graphprotocol/graph-ts";
+import {
+  json,
+  Bytes,
+  dataSource,
+  log,
+  BigInt,
+  JSONValueKind,
+} from "@graphprotocol/graph-ts";
 
 export function handleDropAdded(event: DropAddedEvent): void {
   let entity = new DropAdded(
@@ -75,10 +82,30 @@ export function handleTokenMinted(event: TokenMintedEvent): void {
     token.tokenURI = event.params.uri;
     token.lits = BigInt.fromI32(0);
     token.drops = BigInt.fromI32(0);
-    token.ipfsHashURI = event.params.uri;
     token.externalURL = `https://testnets.opensea.io/assets/base_sepolia/0x0e377f36381cf3ec3ec23c17b65b57fa4d6ce5cb/${event.params.tokenId.toString()}`;
 
-    TokenMetadataTemplate.create(event.params.uri);
+    // Extract CID from the URI (supports both HTTP and IPFS URIs)
+    const uri = event.params.uri;
+    let cidWithPath: string;
+
+    if (uri.startsWith("ipfs://")) {
+      // Handle IPFS URI (e.g., ipfs://CID/metadata.json)
+      cidWithPath = uri.replace("ipfs://", "");
+    } else {
+      // Handle HTTP URL (e.g., Pinata gateway)
+      const parts = uri.split("/ipfs/");
+      if (parts.length < 2) {
+        log.error("Invalid URI format: {}", [uri]);
+        return;
+      }
+      cidWithPath = parts[1];
+    }
+
+    // Set the ipfsURI to the CID (linked to TokenMetadata)
+    token.ipfsHashURI = cidWithPath;
+
+    // Create the File Data Source
+    TokenMetadataTemplate.create(cidWithPath);
 
     token.updatedAtTimestamp = event.block.timestamp;
 
@@ -123,59 +150,92 @@ export function handleTransfer(event: TransferEvent): void {
 
 export function handleMetadata(content: Bytes): void {
   let tokenMetadata = new TokenMetadata(dataSource.stringParam());
-  // Create a new TokenMetadata entity and pass in the dataSource as its ID. This is the ipfsHashUri that we created in the handleTransfer function above.
 
   const value = json.fromBytes(content).toObject();
-  // Create a value variable that will be used to store the json object that is passed in as the content parameter.
-  if (value) {
-    const image = value.get("image");
-    const name = value.get("name");
-    const attributes = value.get("attributes");
-    const description = value.get("description");
+  if (!value) {
+    log.warning("JSON content is not an object", []);
+    return;
+  }
 
-    // Assemblyscript needs to have nullchecks. If the value exists, then we can proceed with the creating an image, name, and attributes variable gathered from the json object.
+  const name = value.get("name");
+  const description = value.get("description");
+  const image = value.get("image");
+  const attributes = value.get("attributes");
 
-    if (name && image && attributes && description) {
-      tokenMetadata.name = name.toString();
-      tokenMetadata.image = image.toString();
-      tokenMetadata.description = description.toString();
-      const attributesArray = attributes.toArray();
+  if (
+    name &&
+    name.kind === JSONValueKind.STRING &&
+    description &&
+    description.kind === JSONValueKind.STRING &&
+    image &&
+    image.kind === JSONValueKind.STRING &&
+    attributes &&
+    attributes.kind === JSONValueKind.ARRAY
+  ) {
+    tokenMetadata.name = name.toString();
+    tokenMetadata.description = description.toString();
+    tokenMetadata.image = image.toString();
 
-      // Assign the name and image object to the tokenMetadata.name and tokenMetadata.image fields. Then, create an attributesArray variable that will be used to store the attributes object as an array. Converting to an array allows us to first loop through the array with the `switch` statement below, then assign the trait_type and value to the tokenMetadata fields.
+    const attributesArray = attributes.toArray();
 
-      if (attributesArray) {
-        for (let i = 0; i < attributesArray.length; i++) {
-          const attributeObject = attributesArray[i].toObject();
-          const trait_type = attributeObject.get("trait_type");
-          const value = attributeObject.get("value");
+    // Initialize default values
+    tokenMetadata.traitType0 = "";
+    tokenMetadata.value0 = "";
+    tokenMetadata.traitType1 = "";
+    tokenMetadata.value1 = "";
+    tokenMetadata.traitType2 = "";
+    tokenMetadata.value2 = "";
+    tokenMetadata.traitType3 = "";
+    tokenMetadata.value3 = "";
+    tokenMetadata.traitType4 = "";
+    tokenMetadata.value4 = "";
 
-          if (trait_type && value) {
-            switch (i) {
-              case 0:
-                tokenMetadata.traitType0 = trait_type.toString();
-                tokenMetadata.value0 = value.toString();
-                break;
-              case 1:
-                tokenMetadata.traitType1 = trait_type.toString();
-                tokenMetadata.value1 = value.toString();
-                break;
-              case 2:
-                tokenMetadata.traitType2 = trait_type.toString();
-                tokenMetadata.value2 = value.toString();
-                break;
-              case 3:
-                tokenMetadata.traitType3 = trait_type.toString();
-                tokenMetadata.value3 = value.toString();
-                break;
-              case 4:
-                tokenMetadata.traitType4 = trait_type.toString();
-                tokenMetadata.value4 = value.toString();
-                break;
-            }
+    for (let i = 0; i < attributesArray.length; i++) {
+      const attributeObject = attributesArray[i].toObject();
+      if (attributeObject) {
+        const trait_type = attributeObject.get("trait_type");
+        const value = attributeObject.get("value");
+
+        if (
+          trait_type &&
+          trait_type.kind === JSONValueKind.STRING &&
+          value &&
+          value.kind === JSONValueKind.STRING
+        ) {
+          switch (i) {
+            case 0:
+              tokenMetadata.traitType0 = trait_type.toString();
+              tokenMetadata.value0 = value.toString();
+              break;
+            case 1:
+              tokenMetadata.traitType1 = trait_type.toString();
+              tokenMetadata.value1 = value.toString();
+              break;
+            case 2:
+              tokenMetadata.traitType2 = trait_type.toString();
+              tokenMetadata.value2 = value.toString();
+              break;
+            case 3:
+              tokenMetadata.traitType3 = trait_type.toString();
+              tokenMetadata.value3 = value.toString();
+              break;
+            case 4:
+              tokenMetadata.traitType4 = trait_type.toString();
+              tokenMetadata.value4 = value.toString();
+              break;
+            default:
+              log.warning(
+                "More than 5 attributes found; ignoring extra attributes.",
+                []
+              );
+              break;
           }
         }
       }
-      tokenMetadata.save();
     }
+
+    tokenMetadata.save();
+  } else {
+    log.warning("Missing or invalid JSON fields for TokenMetadata.", []);
   }
 }
